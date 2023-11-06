@@ -1,0 +1,16 @@
+Flask==2.1.3
+google_api_python_client==2.105.0
+google_auth_oauthlib==0.4.6
+google_auth_oauthlib==1.1.0
+langchain==0.0.331
+matplotlib==3.7.1
+networkx==2.8.8
+numpy==1.24.2
+openai==0.28.0
+Pillow==8.4.0
+Pillow==10.1.0
+protobuf==3.20.3
+python-dotenv==1.0.0
+streamlit==1.27.2
+streamlit==1.28.1
+streamlit_chat==0.1.1

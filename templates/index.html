@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Content</title>
+</head>
+<body>
+    <h1>{{ topic_info }}</h1>
+    <pre>{{ prob_str }}</pre>
+    <h2>Problem Tree</h2>
+    <img src="data:image/png;base64,{{ prob_tree_plot }}" alt="Problem Tree">
+    <h2>Challenges</h2>
+    <pre>{{ topic_challenges }}</pre>
+    <h2>Solutions Tree</h2>
+    <pre>{{ sol_str }}</pre>
+    <img src="data:image/png;base64,{{ sol_tree_plot }}">
+    <h2>Solution Grades</h2>
+    <img src="data:image/png;base64,{{ sol_grades }}" alt="Solution Grades">
+</body>
+</html>
