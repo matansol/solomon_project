@@ -79,6 +79,8 @@ def main():
     st.markdown(f"### Solution Grades")
     st.write(sol_str)
     st.pyplot(sol_grades)
+    
+    chatbot_main()
 
 
 
@@ -98,11 +100,11 @@ def init():
     else:
         print("OPENAI_API_KEY is set")
 
-    # setup streamlit page
-    st.set_page_config(
-        page_title="Connversetion with AI-Agent",
-        page_icon="🤖"
-    )
+    # # setup streamlit page
+    # st.set_page_config(
+    #     page_title="Connversetion with AI-Agent",
+    #     page_icon="🤖"
+    # )
 
 
 def chatbot_main():
