@@ -161,3 +161,4 @@ cython_debug/
 
 # matan add
 .token.json
+.constants.py
