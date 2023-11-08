@@ -76,8 +76,8 @@ def main():
     st.pyplot(sol_tree_plot)
 
     # Display the solution grades
-    st.markdown(f"### Solution Grades")
     st.write(sol_str)
+    st.markdown(f"### Solution Grades")
     st.pyplot(sol_grades)
     
     chatbot_main()
@@ -110,13 +110,25 @@ def init():
 def chatbot_main():
     init()
 
-    topic = "Backpack"
+    # topic = "Backpack"
+    top = None
+    with open('data.pickle', 'rb') as file:
+        top = pickle.load(file)
+    problems = top.get_problems_str()
+    challenges = top.get_challenges_str()
+    solutions = top.challenges[0].get_solutions_str()
     chat = ChatOpenAI(temperature=0)
 
     # initialize message history
     if "messages" not in st.session_state:
+        system_msg = f"""We are a company that makes {top.name} , we want to upgrade our product. 
+        For that end we would like you to help our imployes understand and analyze the problems with the product and the solutions for those problems.
+        For now our problems are: {problems}
+        The Challenges are: {challenges}
+        The Solutions are: {solutions}
+        """
         st.session_state.messages = [
-            SystemMessage(content=f"We are a company that makes {topic} , we want to upgrade our product. For that end we would like you to help our imployes understand and analyze the problems with the product and the solutions for those problems")
+            SystemMessage(content=system_msg)
         ]
 
     st.header("discussion with AI-Bot🤖")
@@ -132,6 +144,24 @@ def chatbot_main():
                 response = chat(st.session_state.messages)
             st.session_state.messages.append(
                 AIMessage(content=response.content))
+    
+    
+    # create the text box below the chat
+    # styl = f"""
+    # <style>
+    #     .stTextInput {{
+    #     position: fixed;
+    #     bottom: 3rem;
+    #     }}
+    # </style>
+    # """
+    # user_input = st.markdown(styl, unsafe_allow_html=True)
+    # if user_input:
+    #     st.session_state.messages.append(HumanMessage(content=user_input))
+    #     with st.spinner("Thinking..."):
+    #         response = chat(st.session_state.messages)
+    #     st.session_state.messages.append(
+    #         AIMessage(content=response.content))
 
     # display message history
     messages = st.session_state.get('messages', [])
