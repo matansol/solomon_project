@@ -45,19 +45,19 @@ def get_people_responses(max_results=10):
         
         sheet = service.spreadsheets()
         result = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
-                                    range=f"sheet1!B2:F{max_results}").execute() # B:General Problem  	C:Choose challenge 	D:Challenge Problem	  E:Challenge Solution	   F:Name
+                                    range=f"sheet1!B2:F{max_results}").execute() # B:General Problem  	B:Solution	   C:Name
         values = result.get('values', [])
         
         responses = []
         for row in values:
-            if len(row) < 5:
+            if len(row) < 3:
                 continue
             dict = {}
             dict['problem'] = row[0]
-            dict['challenge'] = row[1]
-            dict['chall_prob'] = row[2]
-            dict['chall_sol'] = row[3]
-            dict['email'] = row[4]
+            # dict['challenge'] = row[1]
+            # dict['chall_prob'] = row[2]
+            dict['solution'] = row[1]
+            dict['email'] = row[2]
             responses.append(dict)
         
         # print(responses)
@@ -73,8 +73,8 @@ def get_people_responses(max_results=10):
         print(err)
 
 def main():
-    get_people_responses()
-
+    problems = get_people_responses()
+    print(problems)
 
 if __name__ == '__main__':
     main()

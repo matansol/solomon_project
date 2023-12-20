@@ -6,6 +6,7 @@ import pickle
 from PIL import Image
 
 from utils import *
+import constants
 
 
 import streamlit as st
@@ -20,21 +21,11 @@ from langchain.schema import (
     AIMessage
 )
 
-
-# def plot_to_base64(plt_obj):
-#   """Converts a matplotlib plot to a base64 string."""
-
-#   buffer = io.BytesIO()
-#   plt_obj.savefig(buffer, format='png')
-#   buffer.seek(0)
-#   plot_data = base64.b64encode(buffer.read()).decode()
-#   return plot_data
-
 def load_data():
   """Loads data from the 'data.pickle' file."""
 
   topic_info = ""
-  prob_tree_plot = None
+  prob_tree_fig = None
   topic_challenges = ""
   sol_tree_plot = None
   sol_grades = None
@@ -44,19 +35,19 @@ def load_data():
     topic_info = "Topic is " + top.name + "\n"
     prob_str = top.get_problems_str()
     prob_tree_fig = top.plot_hierarchy_problems()
-    s1 = "\nWe look at 1 problem in particular and create from it a developed challenge. \n"
+    s1 = "\nfrom that problem we created a developed challenge. \n"
     topic_challenges = s1 + top.get_challenges_str()
     s2 = "\nFrom that challenge, we create 3 optional solutions:\n"
     sol_str = s2 + top.challenges[0].get_solutions_str()
 
     sol_tree_plot = top.challenges[0].plot_hierarchy_solutions((10, 4))
-    sol_grades = top.challenges[0].plot_solutions_polygons(to_show=False)
+    sol_grades = plot_solutions_polygons(top.challenges[0].solutions)
 
-  return topic_info, prob_str, prob_tree_fig, topic_challenges, sol_str, sol_tree_plot, sol_grades
+  return topic_info, prob_str, prob_tree_fig, topic_challenges, sol_str, sol_tree_plot, sol_grades, top
 
 def main():
     # Load data from your 'data.pickle' file
-    topic_info, prob_str, prob_tree_fig, topic_challenges, sol_str, sol_tree_plot, sol_grades = load_data()
+    topic_info, prob_str, prob_tree_fig, topic_challenges, sol_str, sol_tree_plot, sol_grades, top = load_data()
     # topic_info, prob_str, prob_tree_fig = load_data()
 
     # Display the topic infoz
@@ -67,24 +58,34 @@ def main():
 
     st.write(prob_str)
 
+    st.write("We look at 1 problem in praticular and analyze it")
+    prob = top.problems[1]
+    st.markdown(f"### {prob.sub_class}")
+    st.pyplot(prob.build_knowledge_graph())
+    
     # Display the challenges
-    st.markdown(f"### Challenges")
+    st.markdown(f"### Challenge")
     st.markdown(topic_challenges)
 
     # Display the solutions tree
     st.markdown(f"### Solutions Tree")
     st.pyplot(sol_tree_plot)
-
-    # Display the solution grades
-    st.write(sol_str)
     st.markdown(f"### Solution Grades")
     st.pyplot(sol_grades)
+
+    # Display the solution grades
+    # st.write(sol_str)
+    sols = top.challenges[0].solutions
+    for i, sol in enumerate(sols):
+        st.markdown(f"### {sol.sub_class}")
+        st.write(sol.description)
+        sol_input = st.text_input(f"solution_{i+1} update information", key=f"sol_input_{i}")
+        if sol_input:
+            sol.update_solution(sol_input)
+            with open("streamlit_pkl.pickle", "wb") as file:
+                file.write(pickle.dumps(top))
     
-    chatbot_main()
-
-
-
-
+    chatbot_main2()
 
 
 # Chat bot code
@@ -146,23 +147,6 @@ def chatbot_main():
                 AIMessage(content=response.content))
     
     
-    # create the text box below the chat
-    # styl = f"""
-    # <style>
-    #     .stTextInput {{
-    #     position: fixed;
-    #     bottom: 3rem;
-    #     }}
-    # </style>
-    # """
-    # user_input = st.markdown(styl, unsafe_allow_html=True)
-    # if user_input:
-    #     st.session_state.messages.append(HumanMessage(content=user_input))
-    #     with st.spinner("Thinking..."):
-    #         response = chat(st.session_state.messages)
-    #     st.session_state.messages.append(
-    #         AIMessage(content=response.content))
-
     # display message history
     messages = st.session_state.get('messages', [])
     for i, msg in enumerate(messages[1:]):
@@ -171,7 +155,66 @@ def chatbot_main():
         else:
             message(msg.content, is_user=False, key=str(i) + '_ai')
 
+
+def chatbot_main2():
+    st.title("aristo-chatbot")
+
+    # Set OpenAI API key from Streamlit secrets
+    openai.api_key = constants.OPENAI_API_KEY
+
+    # Set a default model
+    if "openai_model" not in st.session_state:
+        st.session_state["openai_model"] = "gpt-3.5-turbo"
+
+    # Initialize chat history
     
+    # if "messages" not in st.session_state:
+    #     st.session_state.messages = [{"role": "system", "content":"you are a chat bot with the name Chubby, and you finish each sentence with hoof!"}]
+    top = None
+    with open('data.pickle', 'rb') as file:
+        top = pickle.load(file)
+    problems = top.get_problems_str()
+    challenges = top.get_challenges_str()
+    solutions = top.challenges[0].get_solutions_str()
+
+    # initialize message history
+    if "messages" not in st.session_state:
+        system_msg = f"""We are a company that makes {top.name} , we want to upgrade our product. 
+        For that end we would like you to help our imployes understand and analyze the problems with the product and the solutions for those problems.
+        For now our problems are: {problems}
+        The Challenges are: {challenges}
+        The Solutions are: {solutions}
+        """
+        st.session_state.messages = [{"role": "system", "content":system_msg}]
+
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages[1:]:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # Accept user input
+    if prompt := st.chat_input("What is up?"):
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        # Display user message in chat message container
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        # Display assistant response in chat message container
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            full_response = ""
+            for response in openai.ChatCompletion.create(
+                model=st.session_state["openai_model"],
+                messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
+                stream=True,
+            ):  
+                full_response += response.choices[0].delta.get("content", "")
+                message_placeholder.markdown(full_response + "▌")
+            message_placeholder.markdown(full_response)
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
+    
+    # if st.button("Save Chat history"):
+    #     save_chat_history(st.session_state.messages, top)
     
     
 if __name__ == '__main__':
